@@ -1,7 +1,15 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'img.freepik.com',
+        pathname: '/premium-photo/vibrant-ai-logo-design-with-bright-engaging-colors_1222399-79257.jpg',
+      },
+    ],
+  },
 };
 
 export default nextConfig;
