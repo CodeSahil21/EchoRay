@@ -1,7 +1,10 @@
 import { createUser } from "../services/user.service";
 import { Request, Response, NextFunction } from 'express';
-import { createUserSchema } from "../utils/schema"
-import { generateToken } from "../utils/auth";
+import { createUserSchema,loginUserSchema } from "../utils/schema"
+import { generateToken ,comparePassword} from "../utils/auth";
+import prisma from "../db";
+import { AuthenticatedRequest } from "../utils/type";
+import redisClient from '../services/redis.service';
 
 export const createUserController = async (req:Request, res:Response,next:NextFunction):Promise<any> => {
     try{
@@ -28,3 +31,71 @@ export const createUserController = async (req:Request, res:Response,next:NextFu
          // next(error);
      }
 }
+
+export const loginUserController = async (req:Request, res:Response,next:NextFunction):Promise<any> => {
+     try{
+          //validate the request body using the loginUserSchema
+          const validationResult =  loginUserSchema.safeParse(req.body);
+          if (!validationResult.success) {
+               // If validation fails, send a 400 response with the error details
+               return res.status(400).json({ errors: validationResult.error.errors });
+          }
+          const { email, password } = validationResult.data; // Extract validated data    
+          const user = await prisma.user.findUnique({
+               where: { email },
+          });
+          if (!user) {
+               return res.status(404).json({ msg: "User not found" });
+          }
+          // Check if the password is correct
+          const isPasswordValid = await comparePassword(password, user.password );
+
+          if (!isPasswordValid) {
+               return res.status(401).json({ msg: "Invalid password" });
+          }
+          // Generate a token for the user
+          const token = generateToken(user.id);
+          // Optionally, you can set the token in a cookie or send it in the response body
+           res.cookie('token', token, { httpOnly: true });
+          // Send a success response with the user data and token
+          return res.status(200).json({ msg: "User logged in successfully", user, token });
+     }catch(error){
+          console.error('Error during signup:', error);
+          // Send error response
+          return res.status(500).json({ msg: "Error during signin" });
+          // Optionally, pass the error to the global error handler if it exists
+          // next(error);
+     }
+}
+
+
+export const getUserProfile = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<any> => {
+     try {
+         const user = req.user;
+ 
+         if (!user) {
+             return res.status(401).json({ msg: "Unauthorized" });
+         }
+ 
+         return res.status(200).json({ user });
+     } catch (error) {
+         console.error('Error fetching user profile:', error);
+         return res.status(500).json({ msg: "Error fetching user profile" });
+     }
+ };
+ 
+ export const logoutUserController = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<any> => {
+     try {
+         // Clear the token from cookies
+         res.clearCookie('token', { httpOnly: true });
+
+         // Extract the token from cookies or Authorization header
+         const token = req.cookies?.token || req.headers.authorization?.split(' ')[1];
+         redisClient.set(token, 'logout', 'EX', 60 * 60 * 24); // Set the token in Redis with an expiration time
+         return res.status(200).json({ msg: "Logged out successfully" });
+     } catch (error) {
+         console.error('Error during logout:', error);
+         return res.status(500).json({ msg: "Error during logout" });
+     }
+ };
+ 
