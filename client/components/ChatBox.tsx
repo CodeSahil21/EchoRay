@@ -50,18 +50,18 @@ const ChatBox: React.FC<ChatBoxProps> = ({ messages, users, message, setMessage,
         );
       })}
     </div>
-    <div className="inputField w-full flex bg-[#181c2f]/90 border-t border-[#00ff88]/10 shadow-sm px-4 py-3 z-10">
+    <div className="inputField w-full flex bg-[#181c2f]/90 border-t border-[#00ff88]/10 rounded-b-2xl shadow-sm px-4 py-3 z-10">
       <input
         value={message}
         onChange={(e) => setMessage(e.target.value)}
-        className="p-3 px-4 border-none outline-none flex-grow bg-[#232946] text-[#00ff88] placeholder:text-[#00bfff] text-base shadow-inner font-semibold"
+        className="p-3 px-4 border-none outline-none flex-grow bg-[#232946] text-[#00ff88] placeholder:text-[#00bfff] text-base shadow-inner font-semibold rounded-none"
         type="text"
         placeholder="Enter message"
         onKeyDown={e => { if (e.key === "Enter") send(); }}
       />
       <button
         onClick={send}
-        className="ml-2 bg-gradient-to-r from-[#00ff88] to-[#00bfff] hover:from-[#00bfff] hover:to-[#00ff88] text-[#0e1e13] p-3 shadow-lg flex items-center justify-center transition font-bold border-2 border-[#00ff88]/40 hover:border-[#00ff88] rounded-full"
+        className="ml-2 bg-gradient-to-r from-[#00ff88] to-[#00bfff] hover:from-[#00bfff] hover:to-[#00ff88] text-[#0e1e13] rounded-full p-3 shadow-lg flex items-center justify-center transition font-bold border-2 border-[#00ff88]/40 hover:border-[#00ff88]"
       >
         <FiSend className="text-lg" />
       </button>
