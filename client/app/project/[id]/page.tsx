@@ -9,24 +9,87 @@ import AddCollaboratorModal from "@/components/AddCollaboratorModal";
 import { FiUsers, FiPlus, FiX } from "react-icons/fi";
 import axios from "axios";
 import { useParams } from "next/navigation";
-import ProjectPageskeleton from "@/components/ProjectPageskeleton";
 import { initializeSocket, receiveMessage, sendMessage } from '@/config/socketIo';
 import { useSelector } from "react-redux";
 import { RootState } from "@/store";
 import UserProtectWrapper from "@/components/UserProtectWrapper";
-
-
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 type FileTreeType = Record<string, { file: { contents: string } }>;
 
-function WriteAiMessage({ message }: { message: string }) {
+const WriteAiMessage: React.FC<{ message: string }> = ({ message }) => {
+  let text = message;
+  try {
+    const parsed = JSON.parse(message);
+    if (parsed.content) text = parsed.content;
+    else if (parsed.text) text = parsed.text;
+    else if (parsed.message) text = parsed.message;
+    else if (parsed.files && Array.isArray(parsed.files)) {
+      text = parsed.files.map((f: any) =>
+        `### ${f.fileName || f.filename}\n\n\`\`\`\n${(f.content || "").replace(/\\n/g, '\n')}\n\`\`\`\n`
+      ).join('\n');
+    }
+  } catch {}
+  text = text.replace(/\\n/g, '\n');
+
   return (
-    <div className="overflow-auto bg-slate-950 text-white rounded-sm p-2">
-      <pre className="whitespace-pre-wrap text-xs">{message}</pre>
+    <div
+      className="bg-slate-950 text-white rounded-sm p-2 w-[300px] max-w-xs overflow-x-auto break-words"
+      style={{ whiteSpace: "pre-line" }}
+    >
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        components={{
+          code({node, className, children, ...props}) {
+            // @ts-ignore: node.inline is not in the type but is present at runtime
+            const isInline = node && (node as any).inline;
+            if (isInline) {
+              return (
+                <code className={className} {...props}>
+                  {children}
+                </code>
+              );
+            }
+            return (
+              <code className={className} {...props}>
+                {children}
+              </code>
+            );
+          },
+          pre({children, ...props}) {
+            return (
+              <pre
+                className="overflow-x-auto min-w-0"
+                style={{
+                  maxWidth: "100%",
+                  whiteSpace: "pre",
+                  wordBreak: "break-all"
+                }}
+                {...props}
+              >
+                {children}
+              </pre>
+            );
+          },
+          p({children, ...props}) {
+            if (
+              Array.isArray(children) &&
+              children.length === 1 &&
+              React.isValidElement(children[0]) &&
+              (children[0] as any).type === "pre"
+            ) {
+              return children[0];
+            }
+            return <p {...props}>{children}</p>;
+          }
+        }}
+      >
+        {text}
+      </ReactMarkdown>
     </div>
   );
-}
-
+};
 const ProjectPageCompo = () => {
   const [isSidePanelOpen, setIsSidePanelOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -160,8 +223,10 @@ const ProjectPageCompo = () => {
   
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#0f2027] via-[#2c5364] to-[#24243e]">
-        <ProjectPageskeleton />
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-[#0f2027] via-[#2c5364] to-[#24243e]">
+        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-[#00ff88] mb-6"></div>
+        <div className="text-2xl font-bold text-[#00ff88] drop-shadow-lg mb-2">Loading...</div>
+        <div className="text-[#b2becd] text-base">Please wait while we verify your session</div>
       </div>
     );
   }

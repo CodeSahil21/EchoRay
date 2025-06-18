@@ -2,6 +2,7 @@ import { Server, Socket } from "socket.io";
 import jwt from "jsonwebtoken";
 import prisma from "./db"; // Adjust path as needed
 import cookie from "cookie";
+import { generateResult } from "./services/ai.service";
 
 export interface Project {
   id: number;
@@ -82,7 +83,24 @@ export const initSocket = (server: any) => {
     }
 
     socket.on("project-message",async(data:any)=>{
+      const message = data.message;
+      const aiIsPresentInMessage = message.includes("@ai");
       socket.broadcast.to(socket.roomId!).emit("project-message", data);
+
+      if(aiIsPresentInMessage) {
+        const prompt = message.replace("@ai", "");
+
+        const result = await generateResult(prompt);
+
+        io.to(socket.roomId!).emit('project-message', {
+          message: result,
+          sender:{
+            _id: "ai",
+            email:"AI"
+          }
+        });
+        return;
+      }
     });
   });
 

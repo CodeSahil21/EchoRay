@@ -38,7 +38,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({ messages, users, message, setMessage,
               style={{ wordBreak: 'break-word', ...(isCurrentUser ? { borderTopRightRadius: 0 } : { borderTopLeftRadius: 0 }) }}
             >
               <small className={`opacity-90 text-xs mb-1 font-bold ${isCurrentUser ? 'text-[#0e1e13]' : 'text-[#b2becd]'}`}>{msg.sender.email}</small>
-              <div className={`text-sm ${msg.sender._id === 'ai' ? 'text-[#00bfff]' : isCurrentUser ? 'text-[#0e1e13]' : 'text-[#e0e7ff]'}`}>
+              <div className={`text-sm ${msg.sender._id === 'ai' ? 'text-[#00bfff]' : isCurrentUser ? 'text-[#0e1e13]' : 'text-[#e0e7ff]'} `}>
                 {msg.sender._id === "ai" ? (
                   <WriteAiMessage message={msg.message} />
                 ) : (

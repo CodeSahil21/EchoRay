@@ -31,6 +31,7 @@ const LogoutPage: React.FC = () => {
             router.push('/home'); // Redirect to home or any other page if logout fails
         }
  }
+        logoutUser();
     },[])
     // You can add logout logic here, e.g., clearing tokens, redirecting, etc.
     return (
