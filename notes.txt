@@ -1,0 +1,40 @@
+The dompurify library is used to sanitize HTML to prevent Cross-Site Scripting (XSS) and other injection attacks. It ensures that any HTML content rendered in the DOM (especially user-provided content) is safe and does not include malicious scripts or elements.
+
+⚠️ Why is it needed in your component?
+In your CodeEditor component, this line is potentially dangerous:
+
+tsx
+Copy
+Edit
+dangerouslySetInnerHTML={{
+  __html: fileContent,
+}}
+This means you are directly injecting fileContent (which may come from user input or an untrusted source) as HTML into the DOM. If fileContent includes something like:
+
+html
+Copy
+Edit
+<script>alert('XSS');</script>
+It will execute in the browser—this is a severe security vulnerability.
+
+✅ How does dompurify help?
+You can sanitize the HTML like this:
+
+tsx
+Copy
+Edit
+import DOMPurify from 'dompurify';
+
+dangerouslySetInnerHTML={{
+  __html: DOMPurify.sanitize(fileContent),
+}}
+This will strip or neutralize dangerous content like <script> tags, inline event handlers (onclick, onload, etc.), and other potentially harmful code, ensuring only safe HTML is rendered.
+
+🔍 Summary
+Feature	Explanation
+What is DOMPurify?	A JavaScript library to sanitize HTML and prevent XSS.
+Why use it here?	You're rendering dangerouslySetInnerHTML, which is risky if not sanitized.
+What does it do?	It removes or neutralizes malicious scripts or HTML content.
+Result?	Your component becomes safe to use with untrusted or user-generated input.
+
+If your fileContent comes from any external or user-modifiable source, using DOMPurify.sanitize(fileContent) is highly recommended.

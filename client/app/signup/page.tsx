@@ -3,6 +3,9 @@ import React, { useState } from 'react';
 import Link from "next/link";
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
+import { useDispatch } from 'react-redux';
+import { setUser } from '@/store/userSlice'; 
+
 const EyeIcon = ({ open }: { open: boolean }) => (
     <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -30,6 +33,7 @@ const SignupPage: React.FC = () => {
     const [email,setEmail] = useState('');
     const [password,setPassword] = useState('');
     const router = useRouter();
+    const dispatch = useDispatch();
 
     const submitHandler = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
@@ -42,7 +46,7 @@ const SignupPage: React.FC = () => {
             if(response.status === 201){
                 const token = response.data.token;
                 localStorage.setItem('token', token);
-                console.log('Signup successful:', response.data);
+                dispatch(setUser(response.data.user)); 
                 router.push('/home'); 
             }
          }catch(e){

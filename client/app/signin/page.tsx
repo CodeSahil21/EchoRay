@@ -3,6 +3,9 @@ import React, { useState } from 'react';
 import Link from "next/link";
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
+import { useDispatch,} from 'react-redux';
+import { setUser } from '@/store/userSlice'; 
+
 
 const EyeIcon = ({ open }: { open: boolean }) => (
     <svg
@@ -31,6 +34,8 @@ const SigninPage: React.FC = () => {
     const [email,setEmail] = useState('');
     const [password,setPassword] = useState('');
     const router = useRouter();
+    const dispatch = useDispatch();
+
 
     const submitHandler = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
@@ -43,10 +48,11 @@ const SigninPage: React.FC = () => {
             if(response.status === 200){
                 const token = response.data.token;
                 localStorage.setItem('token', token);
-                console.log('Signup successful:', response.data);
+                dispatch(setUser(response.data.user));
                 router.push('/home'); 
             }
          }catch(e){
+                alert('Login failed. Please check your credentials.');
                 if(axios.isAxiosError(e) && e.response){
                     console.error('Login failed:', e.response.data);
                 }else{
