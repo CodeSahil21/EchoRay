@@ -196,6 +196,8 @@ const ProjectPageCompo = () => {
   };
 
   const addCollaborators = async () => {
+    setIsModalOpen(false);
+    toast.info("Adding collaborators...");
     try {
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/project/addUsers`,
@@ -216,13 +218,13 @@ const ProjectPageCompo = () => {
       setSelectedUserId(new Set());
     } catch (error:any) {
       toast.error(  "only leaders can add collaborators.");
-    } finally {
-      setIsModalOpen(false);
-    }
+    } 
   };
 
   const removeCollaborators = async () => {
     if (!project?.id || selectedUserId.size === 0) return;
+    setIsRemoveModalOpen(false);
+    toast.info("Removing collaborators...");  
     try {
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/project/removeUsers`,
@@ -240,7 +242,6 @@ const ProjectPageCompo = () => {
       setProject(response.data.project);
       toast.success("Collaborators removed successfully!");
       setSelectedUserId(new Set());
-      setIsRemoveModalOpen(false);
     } catch (error: any) {
       toast.error(error?.response?.data?.msg || "Failed to remove collaborators.");
     }
