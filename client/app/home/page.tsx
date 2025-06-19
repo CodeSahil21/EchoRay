@@ -8,12 +8,20 @@ import axios from 'axios';
 import 'remixicon/fonts/remixicon.css';
 import { useRouter } from 'next/navigation';
 import UserProtectWrapper from '@/components/UserProtectWrapper';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
+interface ProjectStatetype {
+  id: number;
+  name: string;
+  createdAt: string;
+  users?: { id: number; }[]; 
+}
 const HomePageCompo: React.FC = () => {
   const user = useSelector((state: RootState) => state.user.user);
-  const [popupOpen, setPopupOpen] = useState(false);
-  const [projectsState, setProjectsState] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [popupOpen, setPopupOpen] = useState<boolean>(false);
+  const [projectsState, setProjectsState] = useState<ProjectStatetype[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
   const popupPanelRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
@@ -24,6 +32,7 @@ const HomePageCompo: React.FC = () => {
 
   // Logout handler (clears localStorage and reloads)
   const handleLogout = () => {
+    toast.info("Logging out...");
     router.push('/logout');
   };
 
@@ -60,7 +69,7 @@ const HomePageCompo: React.FC = () => {
     })
       .then((res) => {
         if (res.status === 200) {
-          setProjectsState(res.data.allProjects);
+          setProjectsState(res.data.allProjects as ProjectStatetype[]);
         } else {
           console.error("Failed to fetch projects");
         }
@@ -73,6 +82,18 @@ const HomePageCompo: React.FC = () => {
 
   return (
     <main className="relative min-h-screen bg-gradient-to-br from-[#0f2027] via-[#2c5364] to-[#24243e] flex flex-col items-stretch py-0 px-0 overflow-hidden w-full">
+      <ToastContainer
+           position="top-center"
+           autoClose={2000}
+           hideProgressBar={false}
+           newestOnTop={false}
+           closeOnClick
+           rtl={false}
+           pauseOnFocusLoss
+           draggable
+           pauseOnHover
+           theme="dark"
+       />
       {/* Decorative blurred circles and rings */}
       <div className="pointer-events-none select-none">
         <div className="absolute top-[-100px] left-[-120px] w-96 h-96 bg-[#00ff88]/20 rounded-full blur-3xl z-0" />

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
-
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 interface NewProjectPopupProps {
   onClose: () => void;
@@ -8,7 +9,7 @@ interface NewProjectPopupProps {
 }
 
 const NewProjectPopup: React.FC<NewProjectPopupProps> = ({ onClose, onCreate }) => {
-  const [projectName, setProjectName] = useState("");
+  const [projectName, setProjectName] = useState<string>("");
 
   const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
@@ -30,15 +31,27 @@ const NewProjectPopup: React.FC<NewProjectPopupProps> = ({ onClose, onCreate }) 
       onCreate(createProjectData);
       setProjectName("");
       onClose();
-      alert("Project created successfully!");
+      toast.success("Project created successfully!");
     }
   } catch (e) {
-    alert("Error creating project. Please try again.");
+    toast.error("Error creating project. Please try again.");
   }
 };
 
   return (
     <div className="w-full h-full flex items-center justify-center fixed left-0 top-0 z-50 bg-black/30">
+      <ToastContainer
+        position="top-center"
+        autoClose={2000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="dark"
+      />
       <div className="w-full max-w-md bg-gradient-to-br from-[#181c2f] to-[#232946] border border-[#00ff88]/30 rounded-2xl shadow-2xl p-8 mx-auto animate-in transition-all duration-300">
         <form onSubmit={handleSubmit}>
           <h2 className="text-2xl font-bold text-white mb-4 text-center drop-shadow">New Project</h2>

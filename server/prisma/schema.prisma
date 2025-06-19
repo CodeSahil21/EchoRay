@@ -20,6 +20,7 @@ model User {
   password  String
   createdAt DateTime @default(now())
   projects  Project[] @relation("UserProjects")
+  leadingProjects Project[] @relation("ProjectLeader")
 }
 
 model Project {
@@ -28,4 +29,6 @@ model Project {
   users     User[]   @relation("UserProjects")
   fileTree  Json     @default("{}")
   createdAt DateTime @default(now())
+  leaderId  Int
+  leader    User     @relation("ProjectLeader", fields: [leaderId], references: [id])
 }

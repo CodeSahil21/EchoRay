@@ -5,6 +5,8 @@ import axios from 'axios';
 import { useRouter } from 'next/navigation';
 import { useDispatch } from 'react-redux';
 import { setUser } from '@/store/userSlice'; 
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const EyeIcon = ({ open }: { open: boolean }) => (
     <svg
@@ -29,9 +31,9 @@ const EyeIcon = ({ open }: { open: boolean }) => (
 );
 
 const SignupPage: React.FC = () => {
-    const [showPassword, setShowPassword] = useState(false);
-    const [email,setEmail] = useState('');
-    const [password,setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState<boolean>(false);
+    const [email,setEmail] = useState<string>('');
+    const [password,setPassword] = useState<string>('');
     const router = useRouter();
     const dispatch = useDispatch();
 
@@ -44,21 +46,30 @@ const SignupPage: React.FC = () => {
          try{
             const response = await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/user/register`,signupData);
             if(response.status === 201){
+                toast.success("Signup successful!");
                 const token = response.data.token;
                 localStorage.setItem('token', token);
                 dispatch(setUser(response.data.user)); 
                 router.push('/home'); 
             }
-         }catch(e){
-                if(axios.isAxiosError(e) && e.response){
-                    console.error('Login failed:', e.response.data);
-                }else{
-                    console.error('Error logging in:', e);
-                }
+         }catch(e:any){
+                toast.error(e.response?.data?.msg || "Signup failed. Please try again.");
          }
     }
     return (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#0f2027] via-[#2c5364] to-[#24243e]">
+                        <ToastContainer
+                           position="top-center"
+                           autoClose={3000}
+                           hideProgressBar={false}
+                           newestOnTop={false}
+                           closeOnClick
+                           rtl={false}
+                           pauseOnFocusLoss
+                           draggable
+                           pauseOnHover
+                           theme="dark"
+                        />
             <form onSubmit={(e)=>{
                     submitHandler(e);
                 }}

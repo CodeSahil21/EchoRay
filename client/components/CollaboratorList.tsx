@@ -3,9 +3,10 @@ import { FiUser } from "react-icons/fi";
 
 interface CollaboratorListProps {
   users?: { id: string; email: string }[];
+  leaderId?: string | number;
 }
 
-const CollaboratorList: React.FC<CollaboratorListProps> = ({ users }) => {
+const CollaboratorList: React.FC<CollaboratorListProps> = ({ users, leaderId }) => {
   const safeUsers = Array.isArray(users) ? users : [];
   return (
     <div className="users flex flex-col gap-3 px-4 py-4">
@@ -25,6 +26,9 @@ const CollaboratorList: React.FC<CollaboratorListProps> = ({ users }) => {
             <div className="flex flex-col">
               <span className="font-semibold text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.18)] text-base">
                 {user.email}
+                {leaderId && (user.id === leaderId || user.id === String(leaderId)) && (
+                  <span className="ml-2 text-xs text-yellow-400 font-bold">(Leader)</span>
+                )}
               </span>
             </div>
           </div>

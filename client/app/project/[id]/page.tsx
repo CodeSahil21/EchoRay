@@ -15,9 +15,28 @@ import { RootState } from "@/store";
 import UserProtectWrapper from "@/components/UserProtectWrapper";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 type FileTreeType = Record<string, { file: { contents: string } }>;
 
+interface MessagesType {
+  sender: { _id: string; email: string };
+  message: string;
+}
+
+interface ProjectUser {
+  id:  number; 
+  email: string;
+}
+
+interface ProjectType {
+  id:  number; 
+  name: string;
+  fileTree: any;
+  users: ProjectUser[];
+  leaderId: number;
+}
 const WriteAiMessage: React.FC<{ message: string }> = ({ message }) => {
   let text = message;
   try {
@@ -91,13 +110,13 @@ const WriteAiMessage: React.FC<{ message: string }> = ({ message }) => {
   );
 };
 const ProjectPageCompo = () => {
-  const [isSidePanelOpen, setIsSidePanelOpen] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSidePanelOpen, setIsSidePanelOpen] = useState<boolean>(false);
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [selectedUserId, setSelectedUserId] = useState<Set<string>>(new Set());
-  const [project, setProject] = useState<any>();
-  const [message, setMessage] = useState("");
+  const [project, setProject] = useState<ProjectType>();
+  const [message, setMessage] = useState<string>(""); 
   const [users, setUsers] = useState<any[]>([]);
-  const [messages, setMessages] = useState<any[]>([]);
+  const [messages, setMessages] = useState<MessagesType[]>([]);
   const [fileTree, setFileTree] = useState<FileTreeType>({}); // Start with empty file tree
   const [currentFile, setCurrentFile] = useState<string | null>(null);
   const [openFiles, setOpenFiles] = useState<string[]>([]);
@@ -105,7 +124,7 @@ const ProjectPageCompo = () => {
   const messageBox = useRef<HTMLDivElement>(null);
   const { id } = useParams();
   const projectID = String(id);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(true);
   const user = useSelector((state: RootState) => state.user.user);
   useEffect(() => {
     // Initialize socket connection
@@ -113,7 +132,6 @@ const ProjectPageCompo = () => {
     
      receiveMessage("project-message", (newMessage) => {
       setMessages((prev) => [...prev, newMessage]);
-      console.log("Received message:", newMessage);
     });
 
     const fetchData = async () => {
@@ -131,6 +149,7 @@ const ProjectPageCompo = () => {
         );
         const projectData = projectRes.data.project;
         setProject(projectData);
+        console.log("Project Data:", projectData);
         if (projectData.fileTree && Object.keys(projectData.fileTree).length > 0) {
           setFileTree(projectData.fileTree);
           const firstFile = Object.keys(projectData.fileTree)[0];
@@ -154,8 +173,8 @@ const ProjectPageCompo = () => {
         );
         const usersData = usersRes.data.allUsers;
         setUsers(usersData);
-      } catch (error) {
-        console.error("Error fetching data:", error);
+      } catch (error:any) {
+        console.log("Error fetching data:", error.message);
       } finally {
         setLoading(false);
       }
@@ -178,7 +197,7 @@ const ProjectPageCompo = () => {
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/project/addUsers`,
         {
-          projectId: Number(project.id),
+          projectId: Number(project?.id),
           users: Array.from(selectedUserId).map(Number),
         },
         {
@@ -190,9 +209,10 @@ const ProjectPageCompo = () => {
       );
       // Optionally update project state with new users
       setProject(response.data.project);
+      toast.success("Collaborators added successfully!");
       setSelectedUserId(new Set());
-    } catch (error) {
-      console.error("Error adding collaborators:", error);
+    } catch (error:any) {
+      toast.error(  "only leaders can add collaborators.");
     } finally {
       setIsModalOpen(false);
     }
@@ -233,6 +253,18 @@ const ProjectPageCompo = () => {
 
   return (
     <main className="h-screen w-screen flex bg-gradient-to-br from-[#0f2027] via-[#2c5364] to-[#24243e]">
+        <ToastContainer
+                        position="top-center"
+                        autoClose={3000}
+                        hideProgressBar={false}
+                        newestOnTop={false}
+                        closeOnClick
+                        rtl={false}
+                        pauseOnFocusLoss
+                        draggable
+                        pauseOnHover
+                        theme="dark"
+                     />
       {/* Sidebar and Chat */}
       <section className="relative flex flex-col h-screen min-w-80 bg-[#181c2f]/80 border-r border-[#00ff88]/20">
         <header className="flex justify-between items-center p-2 px-4 w-full bg-[#181c2f]/90 border-b border-[#00ff88]/10 sticky top-0 z-10 shadow-md">
@@ -262,7 +294,7 @@ const ProjectPageCompo = () => {
                 <FiX />
               </button>
             </header>
-            <CollaboratorList users={project?.users} />
+            <CollaboratorList users={project?.users?.map(u => ({ id: String(u.id), email: u.email }))}  leaderId={project?.leaderId} />
           </div>
         )}
       </section>

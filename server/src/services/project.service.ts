@@ -24,9 +24,10 @@ export const createProject = async ({name ,userId}:CreateProjectInput) => {
         const project = await prisma.project.create({
             data:{
                 name,
+                leaderId: userId, 
                 users:{
                     connect: { id: userId }, 
-                },
+                },  
             },
             include: {
                 users:  {
@@ -60,12 +61,11 @@ export const getAllProjects = async (userId:number)=>{
                     some:{id:userId}
                 }
             },
-            include:{
-                users: {
-                    select: {
-                        id: true,
-                    }
-                }
+            select: {
+                id: true,
+                name: true,
+                createdAt: true,
+                 users: { select: { id: true } }
             }
         });
 
@@ -92,10 +92,16 @@ export const addUsersToProject = async ({ projectId , users , userId}:AddUsersTo
             users: {
                 some: { id: userId } // Ensure the user is part of the project
             }
-        }
+        },
+        select:{leaderId:true}
     });
+
     if (!project) {
         throw new Error("You are not authorized to add users to this project");
+    }
+    
+    if (project.leaderId !== userId) {
+        throw new Error("Only the project leader can add users to this project");
     }
 
     // Add users to the project (avoids duplicates)
@@ -128,7 +134,12 @@ export const getProjectById = async ({ projectId }:{ projectId: number }) => {
 
     const project = await prisma.project.findUnique({
         where: { id: projectId },
-        include: {
+        select: {
+            id: true,
+            name: true,
+            fileTree: true,
+            createdAt: true,
+            leaderId: true, 
             users: {
                 select: {
                     id: true,

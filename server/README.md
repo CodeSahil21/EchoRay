@@ -309,3 +309,40 @@ Authorization: Bearer <jwt-token>
   "error": "Project not found"
 }
 ```
+
+---
+
+# AI API Routes Documentation
+
+## 1. Get AI Result
+
+**Endpoint:** `GET /api/v1/ai/get-result`
+
+**Description:** Generate an AI result based on a prompt. Returns the AI-generated result for the given prompt as plain text (not JSON). No authentication required by default (update if you add auth).
+
+**Query Parameters:**
+```
+prompt: string (required)
+```
+
+**Example Request:**
+```
+GET /api/v1/ai/get-result?prompt=Write%20a%20hello%20world%20program%20in%20Python
+```
+
+**Response (200 OK):**
+```
+<plain text response from AI>
+```
+
+**Example:**
+```
+print('Hello, world!')
+```
+
+**Response (500 Internal Server Error):**
+```json
+{
+  "msg": "Error during AI result generation"
+}
+```
