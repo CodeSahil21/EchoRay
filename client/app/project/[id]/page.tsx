@@ -133,8 +133,16 @@ const ProjectPageCompo = () => {
     // Initialize socket connection
     initializeSocket(projectID);
     
-     receiveMessage("project-message", (newMessage) => {
+    receiveMessage("project-message", (newMessage) => {
       setMessages((prev) => [...prev, newMessage]);
+      // If AI response contains fileTree, update project files (flat or nested)
+      try {
+        const parsed = JSON.parse(newMessage.message);
+        if (parsed.fileTree && typeof parsed.fileTree === 'object') {
+          const flatFiles = flattenFileTree(parsed.fileTree);
+          setFileTree(prev => ({ ...prev, ...flatFiles }));
+        }
+      } catch {}
     });
 
     const fetchData = async () => {
@@ -152,7 +160,6 @@ const ProjectPageCompo = () => {
         );
         const projectData = projectRes.data.project;
         setProject(projectData);
-        console.log("Project Data:", projectData);
         if (projectData.fileTree && Object.keys(projectData.fileTree).length > 0) {
           setFileTree(projectData.fileTree);
           const firstFile = Object.keys(projectData.fileTree)[0];
@@ -470,6 +477,19 @@ const ProjectPageCompo = () => {
     </main>
   );
 };
+
+// Utility to flatten nested fileTree
+function flattenFileTree(tree: any, prefix = ""): { [key: string]: any } {
+  let files: { [key: string]: any } = {};
+  for (const key in tree) {
+    if (tree[key]?.file) {
+      files[prefix + key] = tree[key];
+    } else if (typeof tree[key] === 'object' && tree[key] !== null) {
+      files = { ...files, ...flattenFileTree(tree[key], `${prefix}${key}/`) };
+    }
+  }
+  return files;
+}
 
 // ErrorBoundary component to catch errors and redirect
 class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
