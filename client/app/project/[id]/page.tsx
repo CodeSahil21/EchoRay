@@ -177,7 +177,9 @@ const ProjectPageCompo = () => {
         const usersData = usersRes.data.allUsers;
         setUsers(usersData);
       } catch (error:any) {
-        console.log("Error fetching data:", error.message);
+        // Redirect to home on any API error
+        toast.error("An error occurred while fetching project data.");
+        router.push("/home");
       } finally {
         setLoading(false);
       }
@@ -469,11 +471,42 @@ const ProjectPageCompo = () => {
   );
 };
 
+// ErrorBoundary component to catch errors and redirect
+class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
+  static contextType = React.createContext({ push: (path: string) => {} });
+  declare context: React.ContextType<typeof ErrorBoundary.contextType>;
+  constructor(props: any) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  componentDidCatch(error: any, errorInfo: any) {
+    // You can log error here if needed
+  }
+  componentDidUpdate() {
+    if (this.state.hasError && this.context && typeof this.context.push === 'function') {
+      this.context.push('/home');
+    }
+  }
+  render() {
+    if (this.state.hasError) {
+      // Optionally render a fallback UI
+      return null;
+    }
+    return this.props.children;
+  }
+}
+
 const projectPage = () => {
+  const router = useRouter();
   return (
-    <UserProtectWrapper>
-      <ProjectPageCompo />
-    </UserProtectWrapper>
+    <ErrorBoundary>
+      <UserProtectWrapper>
+        <ProjectPageCompo />
+      </UserProtectWrapper>
+    </ErrorBoundary>
   );
 };
 
