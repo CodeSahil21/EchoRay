@@ -6,6 +6,7 @@ import ChatBox from "@/components/ChatBox";
 import CodeEditor from "@/components/CodeEditor";
 import IframePreview from "@/components/IframePreview";
 import AddCollaboratorModal from "@/components/AddCollaboratorModal";
+import RemoveCollaborators from "@/components/RemoveCollaborators";
 import { FiUsers, FiPlus, FiX } from "react-icons/fi";
 import axios from "axios";
 import { useParams, useRouter } from "next/navigation";
@@ -112,6 +113,7 @@ const WriteAiMessage: React.FC<{ message: string }> = ({ message }) => {
 const ProjectPageCompo = () => {
   const [isSidePanelOpen, setIsSidePanelOpen] = useState<boolean>(false);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [isRemoveModalOpen, setIsRemoveModalOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<Set<string>>(new Set());
   const [project, setProject] = useState<ProjectType>();
   const [message, setMessage] = useState<string>(""); 
@@ -219,6 +221,31 @@ const ProjectPageCompo = () => {
     }
   };
 
+  const removeCollaborators = async () => {
+    if (!project?.id || selectedUserId.size === 0) return;
+    try {
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/project/removeUsers`,
+        {
+          projectId: Number(project.id),
+          users: Array.from(selectedUserId).map(Number),
+        },
+        {
+          withCredentials: true,
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      setProject(response.data.project);
+      toast.success("Collaborators removed successfully!");
+      setSelectedUserId(new Set());
+      setIsRemoveModalOpen(false);
+    } catch (error: any) {
+      toast.error(error?.response?.data?.msg || "Failed to remove collaborators.");
+    }
+  };
+
   const send = () => {
     if (!message.trim()) return;
 
@@ -321,7 +348,18 @@ const ProjectPageCompo = () => {
               leaderId={project?.leaderId}
               onDeleteProject={handleDeleteProject}
               currentUserId={user?.id}
+              onRemoveCollaborators={() => setIsRemoveModalOpen(true)}
             />
+            {isRemoveModalOpen && (
+              <RemoveCollaborators
+                users={project?.users?.map(u => ({ id: String(u.id), email: u.email })) || []}
+                selectedUserId={selectedUserId}
+                handleUserClick={handleUserClick}
+                removeCollaborators={removeCollaborators}
+                setIsRemoveModalOpen={setIsRemoveModalOpen}
+                leaderId={project?.leaderId}
+              />
+            )}
           </div>
         )}
       </section>

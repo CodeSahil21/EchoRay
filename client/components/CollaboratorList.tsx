@@ -6,9 +6,10 @@ interface CollaboratorListProps {
   leaderId?: string | number;
   onDeleteProject?: () => void;
   currentUserId?: string | number;
+  onRemoveCollaborators?: () => void;
 }
 
-const CollaboratorList: React.FC<CollaboratorListProps> = ({ users, leaderId, onDeleteProject, currentUserId }) => {
+const CollaboratorList: React.FC<CollaboratorListProps> = ({ users, leaderId, onDeleteProject, currentUserId, onRemoveCollaborators }) => {
   const safeUsers = Array.isArray(users) ? users : [];
   const isLeader = leaderId && (currentUserId === leaderId || String(currentUserId) === String(leaderId));
   return (
@@ -39,18 +40,26 @@ const CollaboratorList: React.FC<CollaboratorListProps> = ({ users, leaderId, on
           </div>
         ))
       )}
-      {/* Delete Project button at the bottom, only for leader */}
+      {/* Leader-only actions at the bottom */}
       {isLeader && (
-        <button
-          className="mt-8 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 font-semibold transition self-center"
-          onClick={() => {
-            if (window.confirm("Are you sure you want to delete this project? This action cannot be undone.")) {
-              onDeleteProject && onDeleteProject();
-            }
-          }}
-        >
-          Delete Project
-        </button>
+        <div className="flex flex-col gap-2 mt-8 self-center">
+          <button
+            className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 font-semibold transition"
+            onClick={() => {
+              if (window.confirm("Are you sure you want to delete this project? This action cannot be undone.")) {
+                onDeleteProject && onDeleteProject();
+              }
+            }}
+          >
+            Delete Project
+          </button>
+          <button
+            className="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600 font-semibold transition"
+            onClick={onRemoveCollaborators}
+          >
+            Remove Collaborators
+          </button>
+        </div>
       )}
     </div>
   );

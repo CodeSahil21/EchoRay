@@ -11,6 +11,12 @@ interface AddUsersToProjectInput{
     userId:number; // The user who is adding other users to the project
 }
 
+interface RemoveUsersFromProjectInput {
+    projectId: number;
+    users: number[]; // array of user IDs to remove
+    userId: number; // The user who is removing others (should be leader)
+}
+
 export const createProject = async ({name ,userId}:CreateProjectInput) => {
    if(!name){
     throw new Error("Project name is required");
@@ -180,3 +186,49 @@ export const deleteProject = async ({ projectId, userId }: { projectId: number; 
     });
     return { message: "Project deleted successfully" };
 };
+
+export const removeUsersFromProject  = async ({ projectId, users, userId }: RemoveUsersFromProjectInput) => {
+    if(!projectId) {
+        throw new Error("Project ID is required");
+    }
+
+    if(!users || !Array.isArray(users) || users.length === 0) {
+        throw new Error("At least one user ID is required to remove from the project");
+    }
+
+    if(!userId) {
+        throw new Error("User ID is required");
+    }
+    // Check if the user is part of the project before removing others
+    const project = await prisma.project.findUnique({
+        where:{id:projectId},
+        select: { leaderId: true }
+    });
+
+    if(!project) {
+        throw new Error("Project not found");
+    }
+
+    if( project.leaderId !== userId) {
+        throw new Error("Only the project leader can remove users from this project");
+    }
+    // Remove users from the project
+    const updatedProject = await prisma.project.update({
+        where: { id: projectId },
+        data: {
+            users: {
+                disconnect: users.map(userId => ({ id: userId }))
+            }
+        },
+        include: {
+            users: {
+                select: {
+                    id: true,
+                    email: true
+                }
+            }
+        }
+    });
+
+    return updatedProject;
+}

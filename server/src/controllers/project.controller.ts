@@ -1,6 +1,6 @@
-import {createProject,getAllProjects,addUsersToProject,getProjectById, deleteProject } from "../services/project.service";
+import {createProject,getAllProjects,addUsersToProject,getProjectById, deleteProject,removeUsersFromProject } from "../services/project.service";
 import {Request, Response} from "express";  
-import {createProjectSchema,addUsersToProjectSchema} from "../utils/schema";
+import {createProjectSchema,addUsersToProjectSchema,removeUsersfromProjectSchema} from "../utils/schema";
 import prisma from "../db";
 import {AuthenticatedRequest} from "../utils/type";
 
@@ -81,5 +81,25 @@ export const deleteProjectController = async (req: AuthenticatedRequest, res: Re
   } catch (e: any) {
     console.error('Error during project deletion:', e);
     return res.status(500).json({ msg: e.message || "Error during project deletion" });
+  }
+};
+
+export const removeUsersFromProjectController = async (req: AuthenticatedRequest, res: Response): Promise<any> => {
+  try {
+    const validationResult = removeUsersfromProjectSchema.safeParse({
+      projectId: Number(req.body.projectId),
+      users: (req.body.users || []).map(Number),
+    });
+      if(!validationResult.success){
+          // If validation fails, send a 400 response with the error details
+          return res.status(400).json({ errors: validationResult.error.errors });
+      }
+    const { projectId, users } = validationResult.data; // Extract validated data
+    const userId = req.user as { id: number }; 
+    const project = await removeUsersFromProject({ projectId, users, userId: userId.id});
+    return res.status(200).json({ msg: "Users removed from project successfully", project });
+  } catch (e: any) {
+    console.log('Error during removing users from project:', e);
+    return res.status(500).json({ msg: e.message || "Error during removing users from project" });
   }
 };
