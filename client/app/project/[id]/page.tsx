@@ -8,7 +8,7 @@ import IframePreview from "@/components/IframePreview";
 import AddCollaboratorModal from "@/components/AddCollaboratorModal";
 import { FiUsers, FiPlus, FiX } from "react-icons/fi";
 import axios from "axios";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { initializeSocket, receiveMessage, sendMessage } from '@/config/socketIo';
 import { useSelector } from "react-redux";
 import { RootState } from "@/store";
@@ -126,6 +126,7 @@ const ProjectPageCompo = () => {
   const projectID = String(id);
   const [loading, setLoading] = useState<boolean>(true);
   const user = useSelector((state: RootState) => state.user.user);
+  const router = useRouter();
   useEffect(() => {
     // Initialize socket connection
     initializeSocket(projectID);
@@ -241,6 +242,27 @@ const ProjectPageCompo = () => {
     }, 100);
   };
   
+  const handleDeleteProject = async () => {
+    if (!project?.id) return;
+    try {
+      await axios.delete(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/project/delete/${project.id}`,
+        {
+          withCredentials: true,
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      toast.success("Project deleted successfully!");
+      setTimeout(() => {
+        router.push("/home");
+      }, 1500);
+    } catch (error: any) {
+      toast.error(error?.response?.data?.msg || "Failed to delete project.");
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-[#0f2027] via-[#2c5364] to-[#24243e]">
@@ -294,7 +316,12 @@ const ProjectPageCompo = () => {
                 <FiX />
               </button>
             </header>
-            <CollaboratorList users={project?.users?.map(u => ({ id: String(u.id), email: u.email }))}  leaderId={project?.leaderId} />
+            <CollaboratorList
+              users={project?.users?.map(u => ({ id: String(u.id), email: u.email }))}
+              leaderId={project?.leaderId}
+              onDeleteProject={handleDeleteProject}
+              currentUserId={user?.id}
+            />
           </div>
         )}
       </section>

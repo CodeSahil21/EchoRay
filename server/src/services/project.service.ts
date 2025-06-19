@@ -155,3 +155,28 @@ export const getProjectById = async ({ projectId }:{ projectId: number }) => {
 
     return project;
 }
+
+export const deleteProject = async ({ projectId, userId }: { projectId: number; userId: number }) => {
+    if (!projectId) {
+        throw new Error("Project ID is required");
+    }
+    if (!userId) {
+        throw new Error("User ID is required");
+    }
+    // Check if the user is the project leader
+    const project = await prisma.project.findUnique({
+        where: { id: projectId },
+        select: { leaderId: true }
+    });
+    if (!project) {
+        throw new Error("Project not found");
+    }
+    if (project.leaderId !== userId) {
+        throw new Error("Only the project leader can delete this project");
+    }
+    // Delete the project
+    await prisma.project.delete({
+        where: { id: projectId }
+    });
+    return { message: "Project deleted successfully" };
+};

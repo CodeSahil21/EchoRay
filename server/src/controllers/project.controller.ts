@@ -1,4 +1,4 @@
-import {createProject,getAllProjects,addUsersToProject,getProjectById } from "../services/project.service";
+import {createProject,getAllProjects,addUsersToProject,getProjectById, deleteProject } from "../services/project.service";
 import {Request, Response} from "express";  
 import {createProjectSchema,addUsersToProjectSchema} from "../utils/schema";
 import prisma from "../db";
@@ -68,3 +68,18 @@ export const getProjectByIdController = async (req: AuthenticatedRequest, res: R
     return res.status(500).json({ msg: e.message});
    }
 }
+
+export const deleteProjectController = async (req: AuthenticatedRequest, res: Response): Promise<any> => {
+  try {
+    const projectId = Number(req.params.projectId);
+    const userId = (req.user as { id: number }).id;
+    if (!projectId) {
+      return res.status(400).json({ msg: "Project ID is required" });
+    }
+    const result = await deleteProject({ projectId, userId });
+    return res.status(200).json(result);
+  } catch (e: any) {
+    console.error('Error during project deletion:', e);
+    return res.status(500).json({ msg: e.message || "Error during project deletion" });
+  }
+};
