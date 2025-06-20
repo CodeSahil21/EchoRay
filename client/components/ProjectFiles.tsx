@@ -9,7 +9,7 @@ interface ProjectFilesProps {
 }
 
 const ProjectFiles: React.FC<ProjectFilesProps> = ({ files, currentFile, setCurrentFile, openFiles, setOpenFiles }) => (
-  <div className="file-tree w-full flex flex-col gap-1 px-2">
+  <div className="file-tree w-full flex flex-col gap-1 px-2 overflow-y-auto" style={{ width: '220px', minWidth: '220px', maxWidth: '220px', height: '100%' }}>
     {files.map((file, index) => {
       const isActive = currentFile === file;
       return (
