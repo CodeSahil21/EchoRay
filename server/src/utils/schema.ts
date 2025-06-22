@@ -23,3 +23,9 @@ export const removeUsersfromProjectSchema = z.object({
   projectId: z.number().int("Project ID must be an integer").positive("Project ID must be a positive number"),
   users: z.array(z.number().int("User ID must be an integer").positive("User ID must be a positive number")).nonempty("At least one user ID is required"),
 });
+
+
+export const updateFileTreeSchema = z.object({
+  projectId: z.number(),
+  fileTree: z.record(z.any()),
+});

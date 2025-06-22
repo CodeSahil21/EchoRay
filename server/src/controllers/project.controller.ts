@@ -1,6 +1,6 @@
-import {createProject,getAllProjects,addUsersToProject,getProjectById, deleteProject,removeUsersFromProject } from "../services/project.service";
+import {createProject,getAllProjects,addUsersToProject,getProjectById, deleteProject,removeUsersFromProject,updateFileTree } from "../services/project.service";
 import {Request, Response} from "express";  
-import {createProjectSchema,addUsersToProjectSchema,removeUsersfromProjectSchema} from "../utils/schema";
+import {createProjectSchema,addUsersToProjectSchema,removeUsersfromProjectSchema,updateFileTreeSchema} from "../utils/schema";
 import prisma from "../db";
 import {AuthenticatedRequest} from "../utils/type";
 
@@ -101,5 +101,24 @@ export const removeUsersFromProjectController = async (req: AuthenticatedRequest
   } catch (e: any) {
     console.log('Error during removing users from project:', e);
     return res.status(500).json({ msg: e.message || "Error during removing users from project" });
+  }
+};
+
+
+export const updateFileTreeController = async (req: AuthenticatedRequest, res: Response): Promise<any> => {
+  try {
+    const validationResult = updateFileTreeSchema.safeParse({
+      projectId: Number(req.body.projectId),
+      fileTree: req.body.fileTree,
+    });
+    if (!validationResult.success) {
+      return res.status(400).json({ errors: validationResult.error.errors });
+    }
+    const { projectId, fileTree } = validationResult.data
+    const project = await updateFileTree({ projectId, fileTree });
+    return res.status(200).json({ msg: "File tree updated successfully", project });
+  } catch (err: any) {
+    console.log("Error updating file tree:", err);
+    return res.status(500).json({ msg: err.message || "Error updating file tree" });
   }
 };

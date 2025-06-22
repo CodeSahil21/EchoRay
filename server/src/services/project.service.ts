@@ -232,3 +232,22 @@ export const removeUsersFromProject  = async ({ projectId, users, userId }: Remo
 
     return updatedProject;
 }
+
+
+export const updateFileTree = async ({projectId ,fileTree}: {projectId: number; fileTree: any;}) => {
+    if (!projectId) {
+        throw new Error("Project ID is required");
+    }
+
+    if (!fileTree || typeof fileTree !== "object") {
+        throw new Error("File tree is required");
+    }
+
+    // Update the file tree
+    const updatedProject = await prisma.project.update({
+        where: { id: projectId },
+        data: { fileTree }
+    });
+
+    return updatedProject;
+}

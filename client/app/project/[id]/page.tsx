@@ -315,6 +315,22 @@ const ProjectPageCompo = () => {
       toast.error(error?.response?.data?.msg || "Failed to delete project.");
     }
   };
+    
+   function fileSaveTree(tree: FileTreeType) {
+    axios.put(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/project/update-file-tree`, {
+      projectId: Number(project?.id),
+      fileTree: tree,
+    }, {
+      withCredentials: true,
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+    }).then(response => {
+      toast.success("File tree saved successfully!");
+    }).catch(error => {
+      toast.error(error?.response?.data?.msg || "Failed to save file tree.");
+    });
+   }
 
   if (loading) {
     return (
@@ -574,7 +590,7 @@ const ProjectPageCompo = () => {
                       },
                     };
                     setFileTree(ft);
-                    // saveFileTree(ft); // Make sure you have a saveFileTree function
+                    fileSaveTree(ft); // Save the file tree when content changes
                   }}
                 />
               ) : (
