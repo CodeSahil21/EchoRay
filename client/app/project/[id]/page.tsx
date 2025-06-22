@@ -564,6 +564,18 @@ const ProjectPageCompo = () => {
                     };
                     setFileTree(ft);
                   }}
+                  onBlur={(updatedContent) => {
+                    const ft = {
+                      ...fileTree,
+                      [currentFile]: {
+                        file: {
+                          contents: updatedContent,
+                        },
+                      },
+                    };
+                    setFileTree(ft);
+                    // saveFileTree(ft); // Make sure you have a saveFileTree function
+                  }}
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-[#b2becd] text-lg">No file selected</div>
