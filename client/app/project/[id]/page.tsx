@@ -7,7 +7,7 @@ import CodeEditor from "@/components/CodeEditor";
 import IframePreview from "@/components/IframePreview";
 import AddCollaboratorModal from "@/components/AddCollaboratorModal";
 import RemoveCollaborators from "@/components/RemoveCollaborators";
-import { FiUsers, FiPlus, FiX } from "react-icons/fi";
+import { FiUsers, FiPlus, FiX, FiMoreVertical } from "react-icons/fi";
 import axios from "axios";
 import { useParams, useRouter } from "next/navigation";
 import { initializeSocket, receiveMessage, sendMessage } from '@/config/socketIo';
@@ -18,6 +18,9 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { getWebContainer } from "@/config/Webcontainer";
+
+
 
 type FileTreeType = Record<string, { file: { contents: string } }>;
 
@@ -123,18 +126,31 @@ const ProjectPageCompo = () => {
   const [currentFile, setCurrentFile] = useState<string | null>(null);
   const [openFiles, setOpenFiles] = useState<string[]>([]);
   const [iframeUrl, setIframeUrl] = useState("https://example.com");
+  const [iframeKey, setIframeKey] = useState(0); // Add this line
+  const [webContainer, setWebContainer] = useState<any>(null);
+  const [runProcess, setRunProcess] = useState<any>(null);
   const messageBox = useRef<HTMLDivElement>(null);
   const { id } = useParams();
   const projectID = String(id);
   const [loading, setLoading] = useState<boolean>(true);
   const user = useSelector((state: RootState) => state.user.user);
   const router = useRouter();
+  const [showProjectFilesMenu, setShowProjectFilesMenu] = useState<boolean>(false);
   useEffect(() => {
     // Initialize socket connection
     initializeSocket(projectID);
-    
+
+    if(webContainer == null){
+      getWebContainer().then(container=>{
+        setWebContainer(container);
+        console.log("webcontainer started");
+      })
+    }
+
     receiveMessage("project-message", (newMessage) => {
       setMessages((prev) => [...prev, newMessage]);
+      console.log("Received message:", newMessage);
+      webContainer?.mount(newMessage.fileTree);
       // If AI response contains fileTree, update project files (flat or nested)
       try {
         const parsed = JSON.parse(newMessage.message);
@@ -380,6 +396,76 @@ const ProjectPageCompo = () => {
           <div className="explorer h-full max-w-64 min-w-52 bg-[#232946]/80 border-r border-[#00ff88]/20 shadow-lg flex flex-col">
             <div className="flex items-center justify-between px-4 pt-4 pb-4">
               <span className="text-lfont-semibold text-[#00ff88] uppercase tracking-wider">Project Files</span>
+              <div className="relative">
+                <button
+                  className="p-2 text-[#00ff88] hover:bg-[#232946] bg-transparent rounded-full transition border border-[#00ff88]/30"
+                  onClick={() => setShowProjectFilesMenu((prev: boolean) => !prev)}
+                  aria-label="More options"
+                  type="button"
+                >
+                  <FiMoreVertical size={20} />
+                </button>
+                {showProjectFilesMenu && (
+                  <div className="absolute right-0 mt-2 w-48 bg-[#232946] border border-[#00ff88]/20 rounded-lg shadow-lg z-50">
+                    <button
+                      className="block w-full text-left px-4 py-2 text-[#00ff88] hover:bg-[#181c2f]"
+                      onClick={() => {
+                        setFileTree({});
+                        setCurrentFile(null);
+                        setOpenFiles([]);
+                        setShowProjectFilesMenu(false);
+                      }}
+                    >
+                      Clear all files
+                    </button>
+                    <button
+                      className="block w-full text-left px-4 py-2 text-[#00ff88] hover:bg-[#181c2f]"
+                      onClick={() => {
+                        if (currentFile) {
+                          const {[currentFile]: _, ...rest} = fileTree;
+                          setFileTree(rest);
+                          setOpenFiles(openFiles.filter(f => f !== currentFile));
+                          setCurrentFile(null);
+                        }
+                        setShowProjectFilesMenu(false);
+                      }}
+                    >
+                      Clear selected file
+                    </button>
+                    <button
+                      className="block w-full text-left px-4 py-2 text-[#00ff88] hover:bg-[#181c2f]"
+                      onClick={() => {
+                        const fileName = prompt('Enter new file name:');
+                        if (fileName && !fileTree[fileName]) {
+                          setFileTree({ ...fileTree, [fileName]: { file: { contents: '' } } });
+                          setOpenFiles([...openFiles, fileName]);
+                          setCurrentFile(fileName);
+                        }
+                        setShowProjectFilesMenu(false);
+                      }}
+                    >
+                      Add file
+                    </button>
+                    <button
+                      className="block w-full text-left px-4 py-2 text-[#00ff88] hover:bg-[#181c2f]"
+                      onClick={() => {
+                        if (currentFile) {
+                          const newName = prompt('Enter new name for the file:', currentFile);
+                          if (newName && newName !== currentFile && !fileTree[newName]) {
+                            const {[currentFile]: fileData, ...rest} = fileTree;
+                            setFileTree({ ...rest, [newName]: fileData });
+                            setOpenFiles(openFiles.map(f => (f === currentFile ? newName : f)));
+                            setCurrentFile(newName);
+                          }
+                        }
+                        setShowProjectFilesMenu(false);
+                      }}
+                    >
+                      Edit file name
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
             <hr className="border-t border-[#00ff88]/30 mx-4 mb-2" />
             <ProjectFiles
@@ -394,14 +480,15 @@ const ProjectPageCompo = () => {
           <div className="code-editor flex flex-col flex-grow h-full bg-[#181c2f]/80">
             {/* Tabs */}
             <div className="top flex justify-between w-full border-b border-[#00ff88]/10 bg-[#232946]/80">
-              <div className="files flex">
+              <div className="files flex overflow-x-auto overflow-y-hidden max-w-[440px] scrollbar-thin scrollbar-thumb-[#00ff88]/40 scrollbar-track-transparent" style={{ whiteSpace: 'nowrap', maxWidth: '440px', height: '48px' }}>
                 {openFiles.map((file, index) => (
                   <button
                     key={index}
                     onClick={() => setCurrentFile(file)}
                     className={`open-file cursor-pointer p-2 px-4 flex items-center w-fit gap-2 border-b-2 rounded-t-lg font-medium transition text-[#b2becd] ${currentFile === file ? "bg-[#181c2f] border-[#00ff88] text-[#00ff88]" : "bg-[#232946] border-transparent hover:bg-[#181c2f] hover:text-[#00ff88]"}`}
+                    style={{ minWidth: '200px', maxWidth: '220px', overflow: 'hidden', textOverflow: 'ellipsis', height: '40px' }}
                   >
-                    <p className="font-semibold text-base">{file}</p>
+                    <p className="font-semibold text-base truncate">{file}</p>
                     {openFiles.length > 1 && (
                       <span
                         className="ml-2 text-[#b2becd] hover:text-red-500 rounded-full p-1 transition"
@@ -423,7 +510,32 @@ const ProjectPageCompo = () => {
               </div>
               <div className="actions flex gap-2 p-2">
                 <button
-                  onClick={() => setIframeUrl("https://example.com")}
+                  onClick={async() => {
+                     await webContainer?.mount(fileTree);
+
+                     const installProcess = await webContainer.spawn("npm", [ "install" ])
+
+                     installProcess.output.pipeTo(new WritableStream({write(chunk){
+                       console.log(chunk.toString());
+                     }}));
+
+                      if (runProcess) {
+                           runProcess.kill()
+                      }
+
+                      let tempRunProcess =   await webContainer.spawn("npm", ["start"]);
+                      tempRunProcess.output.pipeTo(new WritableStream({write(chunk){
+                        console.log(chunk.toString())
+                      }}));
+
+                      setRunProcess(tempRunProcess);
+                      
+                      webContainer.on('server-ready', (port: number, url: string) => {
+                          console.log(port, url)
+                          setIframeUrl(url)
+                      });
+
+                  }}
                   className="p-2 px-4 bg-gradient-to-r from-[#00ff88] to-[#00bfff] text-[#0e1e13] rounded-lg hover:from-[#00bfff] hover:to-[#00ff88] hover:text-white font-semibold shadow border-2 border-transparent hover:border-[#00ff88]"
                 >
                   Run
@@ -460,7 +572,9 @@ const ProjectPageCompo = () => {
           </div>
           {/* Live Preview (iframe) */}
           {iframeUrl && (
-            <IframePreview iframeUrl={iframeUrl} setIframeUrl={setIframeUrl} />
+            <div style={{ width: '420px', minWidth: '420px', maxWidth: '420px', height: '100%' }}>
+              <IframePreview key={iframeKey} iframeUrl={iframeUrl} setIframeUrl={setIframeUrl} />
+            </div>
           )}
         </div>
       </section>

@@ -1,10 +1,10 @@
-import {WebContainer} from "@webcontainer/api";
+import { WebContainer } from "@webcontainer/api";
 
-let webContainerInstance: WebContainer | null = null;
+const globalAny = globalThis as any;
 
 export const getWebContainer = async () => {
-   if(webContainerInstance == null){
-       webContainerInstance = await WebContainer.boot();
-   }
-   return webContainerInstance;
-}
+  if (!globalAny.webContainerInstancePromise) {
+    globalAny.webContainerInstancePromise = WebContainer.boot();
+  }
+  return globalAny.webContainerInstancePromise;
+};
