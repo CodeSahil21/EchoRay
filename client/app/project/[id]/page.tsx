@@ -19,7 +19,7 @@ import remarkGfm from "remark-gfm";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { getWebContainer } from "@/config/Webcontainer";
-
+import FileNameModal from "@/components/FileNameModal";
 
 
 type FileTreeType = Record<string, { file: { contents: string } }>;
@@ -136,6 +136,37 @@ const ProjectPageCompo = () => {
   const user = useSelector((state: RootState) => state.user.user);
   const router = useRouter();
   const [showProjectFilesMenu, setShowProjectFilesMenu] = useState<boolean>(false);
+  const [showFileModal, setShowFileModal] = useState(false);
+  const [fileModalType, setFileModalType] = useState<"create" | "rename" | null>(null);
+  const [fileModalInitial, setFileModalInitial] = useState("");
+
+  // Handler for opening modal
+const openFileModal = (type: "create" | "rename", initial: string = "") => {
+  setFileModalType(type);
+  setFileModalInitial(initial);
+  setShowFileModal(true);
+  setShowProjectFilesMenu(false);
+};
+
+const handleFileModalConfirm = (value: string) => {
+  if (!value) return setShowFileModal(false);
+
+  if (fileModalType === "create") {
+    if (!fileTree[value]) {
+      setFileTree({ ...fileTree, [value]: { file: { contents: "" } } });
+      setOpenFiles([...openFiles, value]);
+      setCurrentFile(value);
+    }
+  } else if (fileModalType === "rename" && currentFile) {
+    if (value !== currentFile && !fileTree[value]) {
+      const { [currentFile]: fileData, ...rest } = fileTree;
+      setFileTree({ ...rest, [value]: fileData });
+      setOpenFiles(openFiles.map(f => (f === currentFile ? value : f)));
+      setCurrentFile(value);
+    }
+  }
+  setShowFileModal(false);
+};
   useEffect(() => {
     // Initialize socket connection
     initializeSocket(projectID);
@@ -451,13 +482,7 @@ const ProjectPageCompo = () => {
                     <button
                       className="block w-full text-left px-4 py-2 text-[#00ff88] hover:bg-[#181c2f]"
                       onClick={() => {
-                        const fileName = prompt('Enter new file name:');
-                        if (fileName && !fileTree[fileName]) {
-                          setFileTree({ ...fileTree, [fileName]: { file: { contents: '' } } });
-                          setOpenFiles([...openFiles, fileName]);
-                          setCurrentFile(fileName);
-                        }
-                        setShowProjectFilesMenu(false);
+                        openFileModal("create");
                       }}
                     >
                       Add file
@@ -465,16 +490,9 @@ const ProjectPageCompo = () => {
                     <button
                       className="block w-full text-left px-4 py-2 text-[#00ff88] hover:bg-[#181c2f]"
                       onClick={() => {
-                        if (currentFile) {
-                          const newName = prompt('Enter new name for the file:', currentFile);
-                          if (newName && newName !== currentFile && !fileTree[newName]) {
-                            const {[currentFile]: fileData, ...rest} = fileTree;
-                            setFileTree({ ...rest, [newName]: fileData });
-                            setOpenFiles(openFiles.map(f => (f === currentFile ? newName : f)));
-                            setCurrentFile(newName);
-                          }
-                        }
-                        setShowProjectFilesMenu(false);
+                       if (currentFile) {
+                         openFileModal("rename", currentFile);
+                       }
                       }}
                     >
                       Edit file name
@@ -605,6 +623,14 @@ const ProjectPageCompo = () => {
                 <div className="w-full h-full flex items-center justify-center text-[#b2becd] text-lg">No file selected</div>
               )}
             </div>
+            <FileNameModal
+              open={showFileModal}
+              initialValue={fileModalInitial}
+              title={fileModalType === "create" ? "Create New File" : "Rename File"}
+              confirmLabel={fileModalType === "create" ? "Create" : "Rename"}
+              onClose={() => setShowFileModal(false)}
+              onConfirm={handleFileModalConfirm}
+           />
           </div>
           {/* Live Preview (iframe) */}
           {iframeUrl && (

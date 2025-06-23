@@ -94,8 +94,8 @@ const model = genAI.getGenerativeModel({
        }
        
        </example>
-    
- IMPORTANT : don't use file name like routes/index.js
+
+ IMPORTANT : don't use file name like routes/index.js and make sure never ever  return file name with this type of naming style like folder/filename.js, always return file name like index.js or app.js or main.js, never use folder/filename.js style naming, always use simple file names like index.js or app.js or main.js, never use folder/filename.js style naming, always use simple file names like index.js or app.js or main.js, never use folder/filename.js style naming, always use simple file names like index.js or app.js or main.js, never use folder/filename.js style naming, always use simple file names like index.js or app.js or main.js, never use folder/filename.js style naming, always use simple file names like index.js or app.js or main.js, never use folder/filename.js style naming, always use simple file names like index.js or app.js or main.js.
 
  
   `
