@@ -479,6 +479,14 @@ const ProjectPageCompo = () => {
                     >
                       Edit file name
                     </button>
+                    <button
+                     className="block w-full text-left px-4 py-2 text-[#00ff88] hover:bg-[#181c2f]"
+                     onClick={() => {
+                     fileSaveTree(fileTree);
+                     setShowProjectFilesMenu(false);
+                    }}>
+                   Save file tree
+               </button>
                   </div>
                 )}
               </div>
