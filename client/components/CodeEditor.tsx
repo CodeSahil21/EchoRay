@@ -10,7 +10,10 @@ export interface CodeEditorProps {
 
 const CodeEditor: React.FC<CodeEditorProps> = ({ fileContent, onChange, onBlur, language = "javascript" }) => {
   // Attach blur event to Monaco editor
-  const handleEditorMount = (editor: any) => {
+  const handleEditorMount = (editor: {
+    onDidBlurEditorWidget: (callback: () => void) => void;
+    getValue: () => string;
+  }): void => {
     if (onBlur) {
       editor.onDidBlurEditorWidget(() => {
         const value = editor.getValue();

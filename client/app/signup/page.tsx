@@ -52,8 +52,14 @@ const SignupPage: React.FC = () => {
                 dispatch(setUser(response.data.user)); 
                 router.push('/home'); 
             }
-         }catch(e:any){
-                toast.error(e.response?.data?.msg || "Signup failed. Please try again.");
+         }catch(e: unknown){ // FIX: specify error type
+               if (axios.isAxiosError(e)) {
+                    toast.error(e.response?.data?.msg || "Signup failed. Please try again.");
+                    console.log('Signup failed:', e.message || e);
+                } else {
+                    toast.error("Signup failed. Please try again.");
+                    console.log('Signup failed:', e);
+                }
          }
     }
     return (

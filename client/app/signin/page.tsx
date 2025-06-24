@@ -53,9 +53,14 @@ const SigninPage: React.FC = () => {
                 dispatch(setUser(response.data.user));
                 router.push('/home'); 
             }
-         }catch(e:any){
-                toast.error(e.response?.data?.msg || "Login failed. Please try again.");
-                console.log('Login failed:', e.message || e);
+         }catch(e: unknown){ // FIX: specify error type
+               if (axios.isAxiosError(e)) {
+                    toast.error(e.response?.data?.msg || "Login failed. Please try again.");
+                    console.log('Login failed:', e.message || e);
+                } else {
+                    toast.error("Login failed. Please try again.");
+                    console.log('Login failed:', e);
+                }
          }
     }
     return (
@@ -124,7 +129,7 @@ const SigninPage: React.FC = () => {
                     Sign in
                 </button>
                 <div className="mt-6 text-center">
-                    <span className="text-[#b2becd] text-sm">Don't have an account? </span>
+                    <span className="text-[#b2becd] text-sm">Don&apos;t have an account? </span>
                     <Link
                         href="/signup"
                         className="text-[#00bfff] hover:underline font-semibold transition-colors"

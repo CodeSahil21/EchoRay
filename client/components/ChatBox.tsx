@@ -8,7 +8,6 @@ interface ChatMessage {
 
 interface ChatBoxProps {
   messages: ChatMessage[];
-  users: { _id: string; email: string }[];
   message: string;
   setMessage: (msg: string) => void;
   send: () => void;
@@ -17,7 +16,7 @@ interface ChatBoxProps {
   currentUserId?: string;
 }
 
-const ChatBox: React.FC<ChatBoxProps> = ({ messages, users, message, setMessage, send, messageBox, WriteAiMessage, currentUserId }) => (
+const ChatBox: React.FC<ChatBoxProps> = ({ messages, message, setMessage, send, messageBox, WriteAiMessage, currentUserId }) => (
   <div className="conversation-area flex-grow flex flex-col h-full min-h-0 relative bg-gradient-to-b from-[#0f2027] via-[#2c5364] to-[#24243e]">
     <div
       ref={messageBox}
@@ -53,7 +52,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({ messages, users, message, setMessage,
     <div className="inputField w-full flex bg-[#181c2f]/90 border-t border-[#00ff88]/10 rounded-b-2xl shadow-sm px-4 py-3 z-10">
       <input
         value={message}
-        onChange={(e) => setMessage(e.target.value)}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMessage(e.target.value)}
         className="p-3 px-4 border-none outline-none flex-grow bg-[#232946] text-[#00ff88] placeholder:text-[#00bfff] text-base shadow-inner font-semibold rounded-none"
         type="text"
         placeholder="Enter message"

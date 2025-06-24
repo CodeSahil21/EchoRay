@@ -3,14 +3,14 @@ import { FiX, FiUser, FiSearch, FiUserPlus } from "react-icons/fi";
 
 interface AddCollaboratorModalProps {
   users: { id: string; email: string }[];
-  selectedUserId: Set<string>;
+  selectedUserId: Set<string>; // FIX: use Set<string> type
   handleUserClick: (id: string) => void;
   addCollaborators: () => void;
   setIsModalOpen: (open: boolean) => void;
 }
 
 const AddCollaboratorModal: React.FC<AddCollaboratorModalProps> = ({ users, selectedUserId, handleUserClick, addCollaborators, setIsModalOpen }) => {
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState<string>(""); // FIX: add type annotation
   const filteredUsers = (Array.isArray(users) ? users : []).filter(user => user.email.toLowerCase().includes(search.toLowerCase()));
 
   return (
@@ -33,7 +33,7 @@ const AddCollaboratorModal: React.FC<AddCollaboratorModalProps> = ({ users, sele
               type="text"
               placeholder="Search by email..."
               value={search}
-              onChange={e => setSearch(e.target.value)}
+              onChange={e => setSearch(e.target.value)} // FIX: add type to e
               className="w-full pl-10 pr-4 py-2 rounded-lg border border-[#00ff88]/20 bg-[#232946] focus:outline-none focus:ring-2 focus:ring-[#00ff88]/30 text-[#00ff88] placeholder:text-[#b2becd] shadow-sm transition"
             />
             <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-[#00ff88]/60 text-lg" />

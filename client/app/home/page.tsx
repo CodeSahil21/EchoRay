@@ -15,7 +15,7 @@ interface ProjectStatetype {
   id: number;
   name: string;
   createdAt: string;
-  users?: { id: number; }[]; 
+  users?: { id: number; }[];
 }
 const HomePageCompo: React.FC = () => {
   const user = useSelector((state: RootState) => state.user.user);
@@ -74,7 +74,7 @@ const HomePageCompo: React.FC = () => {
           console.error("Failed to fetch projects");
         }
       })
-      .catch((err) => {
+      .catch((err: unknown) => { // FIX: specify type instead of any
         console.error("Error fetching projects:", err);
       })
       .finally(() => setLoading(false));

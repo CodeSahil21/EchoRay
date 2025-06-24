@@ -2,9 +2,8 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch} from 'react-redux';
 import { setUser, clearUser } from '@/store/userSlice'; // adjust path if needed
-import { RootState } from '@/store'; // adjust path if needed
 
 interface UserProtectWrapperProps {
   children: React.ReactNode;
@@ -13,7 +12,6 @@ interface UserProtectWrapperProps {
 const UserProtectWrapper: React.FC<UserProtectWrapperProps> = ({ children }) => {
   const router = useRouter();
   const dispatch = useDispatch();
-  const user = useSelector((state: RootState) => state.user.user);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -35,6 +33,11 @@ const UserProtectWrapper: React.FC<UserProtectWrapperProps> = ({ children }) => 
         );
         if (response.status === 200) {
           dispatch(setUser(response.data.user));
+        } else {
+          // If not 200, treat as unauthenticated
+          localStorage.removeItem('token');
+          dispatch(clearUser());
+          router.replace('/signin');
         }
       } catch (err) {
         localStorage.removeItem('token');
@@ -46,7 +49,7 @@ const UserProtectWrapper: React.FC<UserProtectWrapperProps> = ({ children }) => 
     };
 
     fetchUserProfile();
-  }, [router, dispatch]);
+  }); 
 
   if (isLoading) {
     return (

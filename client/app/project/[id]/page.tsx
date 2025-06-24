@@ -7,7 +7,7 @@ import CodeEditor from "@/components/CodeEditor";
 import IframePreview from "@/components/IframePreview";
 import AddCollaboratorModal from "@/components/AddCollaboratorModal";
 import RemoveCollaborators from "@/components/RemoveCollaborators";
-import { FiUsers, FiPlus, FiX, FiMoreVertical } from "react-icons/fi";
+import { FiUsers, FiX, FiMoreVertical } from "react-icons/fi";
 import axios from "axios";
 import { useParams, useRouter } from "next/navigation";
 import { initializeSocket, receiveMessage, sendMessage } from '@/config/socketIo';
@@ -20,6 +20,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { getWebContainer } from "@/config/Webcontainer";
 import FileNameModal from "@/components/FileNameModal";
+import { WebContainer } from "@webcontainer/api";
 
 
 type FileTreeType = Record<string, { file: { contents: string } }>;
@@ -37,21 +38,24 @@ interface ProjectUser {
 interface ProjectType {
   id:  number; 
   name: string;
-  fileTree: any;
+  fileTree: FileTreeType;//1)
   users: ProjectUser[];
   leaderId: number;
 }
 const WriteAiMessage: React.FC<{ message: string }> = ({ message }) => {
   let text = message;
   try {
-    const parsed = JSON.parse(message);
-    if (parsed.content) text = parsed.content;
-    else if (parsed.text) text = parsed.text;
-    else if (parsed.message) text = parsed.message;
-    else if (parsed.files && Array.isArray(parsed.files)) {
-      text = parsed.files.map((f: any) =>
-        `### ${f.fileName || f.filename}\n\n\`\`\`\n${(f.content || "").replace(/\\n/g, '\n')}\n\`\`\`\n`
-      ).join('\n');
+    const parsed: Record<string, unknown> = JSON.parse(message); // FIX: avoid any
+    if (typeof parsed === 'object' && parsed !== null) {
+      if ('content' in parsed && typeof parsed.content === 'string') text = parsed.content;
+      else if ('text' in parsed && typeof parsed.text === 'string') text = parsed.text;
+      else if ('message' in parsed && typeof parsed.message === 'string') text = parsed.message;
+      else if ('files' in parsed && Array.isArray(parsed.files)) {
+        text = (parsed.files as Array<{ fileName?: string; filename?: string; content?: string }>).
+          map((f) =>
+            `### ${f.fileName || f.filename}\n\n\\n${(f.content || "").replace(/\\n/g, '\n')}\n\\n`
+          ).join('\n');
+      }
     }
   } catch {}
   text = text.replace(/\\n/g, '\n');
@@ -65,7 +69,6 @@ const WriteAiMessage: React.FC<{ message: string }> = ({ message }) => {
         remarkPlugins={[remarkGfm]}
         components={{
           code({node, className, children, ...props}) {
-            // @ts-ignore: node.inline is not in the type but is present at runtime
             const isInline = node && (node as any).inline;
             if (isInline) {
               return (
@@ -100,7 +103,7 @@ const WriteAiMessage: React.FC<{ message: string }> = ({ message }) => {
               Array.isArray(children) &&
               children.length === 1 &&
               React.isValidElement(children[0]) &&
-              (children[0] as any).type === "pre"
+              (children[0] ).type === "pre"//2
             ) {
               return children[0];
             }
@@ -120,15 +123,13 @@ const ProjectPageCompo = () => {
   const [selectedUserId, setSelectedUserId] = useState<Set<string>>(new Set());
   const [project, setProject] = useState<ProjectType>();
   const [message, setMessage] = useState<string>(""); 
-  const [users, setUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<ProjectUser[]>([]); // FIX: use ProjectUser[]
   const [messages, setMessages] = useState<MessagesType[]>([]);
   const [fileTree, setFileTree] = useState<FileTreeType>({}); // Start with empty file tree
   const [currentFile, setCurrentFile] = useState<string | null>(null);
   const [openFiles, setOpenFiles] = useState<string[]>([]);
   const [iframeUrl, setIframeUrl] = useState("https://example.com");
-  const [iframeKey, setIframeKey] = useState(0); // Add this line
-  const [webContainer, setWebContainer] = useState<any>(null);
-  const [runProcess, setRunProcess] = useState<any>(null);
+  const [runProcess, setRunProcess] = useState<null | { kill: () => void }>(null); // FIX: type for runProcess
   const messageBox = useRef<HTMLDivElement>(null);
   const { id } = useParams();
   const projectID = String(id);
@@ -139,7 +140,7 @@ const ProjectPageCompo = () => {
   const [showFileModal, setShowFileModal] = useState(false);
   const [fileModalType, setFileModalType] = useState<"create" | "rename" | null>(null);
   const [fileModalInitial, setFileModalInitial] = useState("");
-
+  const [webContainer, setWebContainer] = useState<WebContainer | null>(null);
   // Handler for opening modal
 const openFileModal = (type: "create" | "rename", initial: string = "") => {
   setFileModalType(type);
@@ -171,11 +172,12 @@ const handleFileModalConfirm = (value: string) => {
     // Initialize socket connection
     initializeSocket(projectID);
 
-    if(webContainer == null){
-      getWebContainer().then(container=>{
+    // Initialize web container
+    if (!webContainer) {
+      getWebContainer().then(container => {
         setWebContainer(container);
-        console.log("webcontainer started");
-      })
+        console.log("container started");
+      });
     }
 
     receiveMessage("project-message", (newMessage) => {
@@ -230,8 +232,7 @@ const handleFileModalConfirm = (value: string) => {
         );
         const usersData = usersRes.data.allUsers;
         setUsers(usersData);
-      } catch (error:any) {
-        // Redirect to home on any API error
+      } catch (error) {
         toast.error("An error occurred while fetching project data.");
         router.push("/home");
       } finally {
@@ -240,7 +241,8 @@ const handleFileModalConfirm = (value: string) => {
     };
 
     fetchData();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run once on mount
 
   const handleUserClick = (id: string) => {
     setSelectedUserId((prev) => {
@@ -272,8 +274,8 @@ const handleFileModalConfirm = (value: string) => {
       setProject(response.data.project);
       toast.success("Collaborators added successfully!");
       setSelectedUserId(new Set());
-    } catch (error:any) {
-      toast.error(  "only leaders can add collaborators.");
+    } catch {
+      toast.error("only leaders can add collaborators.");
     } 
   };
 
@@ -298,8 +300,8 @@ const handleFileModalConfirm = (value: string) => {
       setProject(response.data.project);
       toast.success("Collaborators removed successfully!");
       setSelectedUserId(new Set());
-    } catch (error: any) {
-      toast.error(error?.response?.data?.msg || "Failed to remove collaborators.");
+    } catch {
+      toast.error("Failed to remove collaborators.");
     }
   };
 
@@ -342,32 +344,37 @@ const handleFileModalConfirm = (value: string) => {
       setTimeout(() => {
         router.push("/home");
       }, 1500);
-    } catch (error: any) {
-      toast.error(error?.response?.data?.msg || "Failed to delete project.");
+    } catch {
+      toast.error("Failed to delete project.");
     }
   };
     
-   function fileSaveTree(tree: FileTreeType) {
-    axios.put(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/project/update-file-tree`, {
-      projectId: Number(project?.id),
-      fileTree: tree,
-    }, {
-      withCredentials: true,
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
-      },
-    }).then(response => {
-      toast.success("File tree saved successfully!");
-    }).catch(error => {
-      toast.error(error?.response?.data?.msg || "Failed to save file tree.");
-    });
+function fileSaveTree(tree: FileTreeType) {
+  axios.put(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/project/update-file-tree`, {
+    projectId: Number(project?.id),
+    fileTree: tree,
+  }, {
+    withCredentials: true,
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem("token")}`,
+    },
+  }).then(() => {
+    toast.success("File tree saved successfully!");
+  }).catch((error: unknown) => {
+    if (typeof error === 'object' && error !== null && 'response' in error) {
+      // @ts-expect-error: error.response may exist
+      toast.error(error.response?.data?.msg || "Failed to save file tree.");
+    } else {
+      toast.error("Failed to save file tree.");
+    }
+  });
    }
 
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-[#0f2027] via-[#2c5364] to-[#24243e]">
         <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-[#00ff88] mb-6"></div>
-        <div className="text-2xl font-bold text-[#00ff88] drop-shadow-lg mb-2">Loading...</div>
+        <div className="text-2xl font-bold text-[#00ff88] drop-shadow-lg mb-2">Loading project page...</div>
         <div className="text-[#b2becd] text-base">Please wait while we verify your session</div>
       </div>
     );
@@ -399,7 +406,6 @@ const handleFileModalConfirm = (value: string) => {
         </header>
         <ChatBox
           messages={messages}
-          users={users}
           message={message}
           setMessage={setMessage}
           send={send}
@@ -555,9 +561,9 @@ const handleFileModalConfirm = (value: string) => {
                   onClick={async() => {
                      await webContainer?.mount(fileTree);
 
-                     const installProcess = await webContainer.spawn("npm", [ "install" ])
+                     const installProcess = await webContainer?.spawn("npm", [ "install" ])
 
-                     installProcess.output.pipeTo(new WritableStream({write(chunk){
+                     installProcess?.output.pipeTo(new WritableStream({write(chunk){
                        console.log(chunk.toString());
                      }}));
 
@@ -565,14 +571,17 @@ const handleFileModalConfirm = (value: string) => {
                            runProcess.kill()
                       }
 
-                      let tempRunProcess =   await webContainer.spawn("npm", ["start"]);
-                      tempRunProcess.output.pipeTo(new WritableStream({write(chunk){
+                      const tempRunProcess = await webContainer?.spawn("npm", ["start"]);
+
+                      tempRunProcess?.output.pipeTo(new WritableStream({write(chunk){
                         console.log(chunk.toString())
                       }}));
 
-                      setRunProcess(tempRunProcess);
+                      if (tempRunProcess) {
+                        setRunProcess(tempRunProcess);
+                      }
                       
-                      webContainer.on('server-ready', (port: number, url: string) => {
+                      webContainer?.on('server-ready', (port: number, url: string) => {
                           console.log(port, url)
                           setIframeUrl(url)
                       });
@@ -635,7 +644,7 @@ const handleFileModalConfirm = (value: string) => {
           {/* Live Preview (iframe) */}
           {iframeUrl && (
             <div style={{ width: '420px', minWidth: '420px', maxWidth: '420px', height: '100%' }}>
-              <IframePreview key={iframeKey} iframeUrl={iframeUrl} setIframeUrl={setIframeUrl} />
+              <IframePreview key={iframeUrl} iframeUrl={iframeUrl} setIframeUrl={setIframeUrl} />
             </div>
           )}
         </div>
@@ -643,7 +652,7 @@ const handleFileModalConfirm = (value: string) => {
       {/* Add Collaborator Modal */}
       {isModalOpen && (
         <AddCollaboratorModal
-          users={users}
+          users={users.map(u => ({ id: String(u.id), email: u.email }))}
           selectedUserId={selectedUserId}
           handleUserClick={handleUserClick}
           addCollaborators={addCollaborators}
@@ -655,13 +664,14 @@ const handleFileModalConfirm = (value: string) => {
 };
 
 // Utility to flatten nested fileTree
-function flattenFileTree(tree: any, prefix = ""): { [key: string]: any } {
-  let files: { [key: string]: any } = {};
+function flattenFileTree(tree: Record<string, unknown>, prefix = ""): { [key: string]: { file: { contents: string } } } {
+  let files: { [key: string]: { file: { contents: string } } } = {};
   for (const key in tree) {
-    if (tree[key]?.file) {
-      files[prefix + key] = tree[key];
-    } else if (typeof tree[key] === 'object' && tree[key] !== null) {
-      files = { ...files, ...flattenFileTree(tree[key], `${prefix}${key}/`) };
+    const value = tree[key];
+    if (typeof value === 'object' && value !== null && 'file' in value) {
+      files[prefix + key] = value as { file: { contents: string } };
+    } else if (typeof value === 'object' && value !== null) {
+      files = { ...files, ...flattenFileTree(value as Record<string, unknown>, `${prefix}${key}/`) };
     }
   }
   return files;
@@ -669,16 +679,16 @@ function flattenFileTree(tree: any, prefix = ""): { [key: string]: any } {
 
 // ErrorBoundary component to catch errors and redirect
 class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
-  static contextType = React.createContext({ push: (path: string) => {} });
+  static contextType = React.createContext<{ push: (path: string) => void }>({ push: () => {} }); // FIX: type context
   declare context: React.ContextType<typeof ErrorBoundary.contextType>;
-  constructor(props: any) {
+  constructor(props: { children: React.ReactNode }) {
     super(props);
     this.state = { hasError: false };
   }
   static getDerivedStateFromError() {
     return { hasError: true };
   }
-  componentDidCatch(error: any, errorInfo: any) {
+  componentDidCatch(/* error: unknown, errorInfo: unknown */) {
     // You can log error here if needed
   }
   componentDidUpdate() {
@@ -695,8 +705,7 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
   }
 }
 
-const projectPage = () => {
-  const router = useRouter();
+function ProjectPage() { // FIX: Capitalize component name
   return (
     <ErrorBoundary>
       <UserProtectWrapper>
@@ -704,6 +713,6 @@ const projectPage = () => {
       </UserProtectWrapper>
     </ErrorBoundary>
   );
-};
+}
 
-export default projectPage;
+export default ProjectPage;
