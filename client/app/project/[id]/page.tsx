@@ -376,7 +376,7 @@ function fileSaveTree(tree: FileTreeType) {
         <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-[#00ff88] mb-6"></div>
         <div className="text-2xl font-bold text-[#00ff88] drop-shadow-lg mb-2">Loading project page...</div>
         <div className="text-[#b2becd] text-base">Please wait while we verify your session</div>
-      </div>
+      </div> //loader
     );
   }
 
