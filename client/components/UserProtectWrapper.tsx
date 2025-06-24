@@ -34,22 +34,26 @@ const UserProtectWrapper: React.FC<UserProtectWrapperProps> = ({ children }) => 
         if (response.status === 200) {
           dispatch(setUser(response.data.user));
         } else {
-          // If not 200, treat as unauthenticated
           localStorage.removeItem('token');
           dispatch(clearUser());
           router.replace('/signin');
         }
-      } catch (err) {
+      } catch (err) { 
+        if (axios.isAxiosError(err)) {
+          console.error('Error fetching user profile:', err.response?.data?.msg || err.message);
+        }else{
         localStorage.removeItem('token');
         dispatch(clearUser());
         router.replace('/signin');
+        }
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchUserProfile();
-  }); 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // intentionally omit dependencies to run only once on mount
 
   if (isLoading) {
     return (

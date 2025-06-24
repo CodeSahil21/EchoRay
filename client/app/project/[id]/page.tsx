@@ -69,6 +69,7 @@ const WriteAiMessage: React.FC<{ message: string }> = ({ message }) => {
         remarkPlugins={[remarkGfm]}
         components={{
           code({node, className, children, ...props}) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const isInline = node && (node as any).inline;
             if (isInline) {
               return (
@@ -179,8 +180,8 @@ const handleFileModalConfirm = (value: string) => {
         console.log("container started");
       });
     }
-
-    receiveMessage("project-message", (newMessage) => {
+ // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    receiveMessage("project-message", (newMessage: any) => {
       setMessages((prev) => [...prev, newMessage]);
       console.log("Received message:", newMessage);
       webContainer?.mount(newMessage.fileTree);
@@ -232,8 +233,9 @@ const handleFileModalConfirm = (value: string) => {
         );
         const usersData = usersRes.data.allUsers;
         setUsers(usersData);
-      } catch (error) {
+      } catch (error) { 
         toast.error("An error occurred while fetching project data.");
+        console.error("Error fetching project data:", error);
         router.push("/home");
       } finally {
         setLoading(false);
@@ -475,7 +477,8 @@ function fileSaveTree(tree: FileTreeType) {
                       className="block w-full text-left px-4 py-2 text-[#00ff88] hover:bg-[#181c2f]"
                       onClick={() => {
                         if (currentFile) {
-                          const {[currentFile]: _, ...rest} = fileTree;
+                          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                          const {[currentFile]: _, ...rest} = fileTree; 
                           setFileTree(rest);
                           setOpenFiles(openFiles.filter(f => f !== currentFile));
                           setCurrentFile(null);
