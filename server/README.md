@@ -17,7 +17,7 @@
 **Response (201 Created):**
 ```json
 {
-  "msg": "User registered successfully",
+  "msg": "User created successfully",
   "user": {
     "id": 1,
     "email": "user@example.com",
@@ -30,7 +30,16 @@
 **Response (400 Bad Request):**
 ```json
 {
-  "error": "Email already exists"
+  "errors": [
+    { "path": ["email"], "message": "Invalid email format" }
+  ]
+}
+```
+
+**Response (500 Internal Server Error):**
+```json
+{
+  "msg": "Error during signup"
 }
 ```
 
@@ -53,7 +62,7 @@
 **Response (200 OK):**
 ```json
 {
-  "msg": "Login successful",
+  "msg": "User logged in successfully",
   "user": {
     "id": 1,
     "email": "user@example.com"
@@ -65,7 +74,30 @@
 **Response (400 Bad Request):**
 ```json
 {
-  "error": "Invalid email or password"
+  "errors": [
+    { "path": ["email"], "message": "Invalid email format" }
+  ]
+}
+```
+
+**Response (404 Not Found):**
+```json
+{
+  "msg": "User not found"
+}
+```
+
+**Response (401 Unauthorized):**
+```json
+{
+  "msg": "Invalid password"
+}
+```
+
+**Response (500 Internal Server Error):**
+```json
+{
+  "msg": "Error during signin"
 }
 ```
 
@@ -96,7 +128,14 @@ Authorization: Bearer <jwt-token>
 **Response (401 Unauthorized):**
 ```json
 {
-  "error": "Unauthorized"
+  "msg": "Unauthorized"
+}
+```
+
+**Response (500 Internal Server Error):**
+```json
+{
+  "msg": "Error fetching user profile"
 }
 ```
 
@@ -116,7 +155,14 @@ Authorization: Bearer <jwt-token>
 **Response (200 OK):**
 ```json
 {
-  "msg": "Logout successful"
+  "msg": "Logged out successfully"
+}
+```
+
+**Response (500 Internal Server Error):**
+```json
+{
+  "msg": "Error during logout"
 }
 ```
 
@@ -137,21 +183,21 @@ Authorization: Bearer <jwt-token>
 ```json
 {
   "msg": "All users fetched successfully",
-  "users": [
+  "allUsers": [
     {
       "id": 2,
       "email": "otheruser@example.com",
       "createdAt": "2025-06-15T12:34:56.789Z"
-    },
+    }
     // ...more users
   ]
 }
 ```
 
-**Response (401 Unauthorized):**
+**Response (500 Internal Server Error):**
 ```json
 {
-  "error": "Unauthorized"
+  "msg": "Error fetching all users"
 }
 ```
 
@@ -181,7 +227,7 @@ Authorization: Bearer <jwt-token>
 ```json
 {
   "msg": "Project created successfully",
-  "project": {
+  "newproject": {
     "id": 1,
     "name": "My Project",
     "users": [
@@ -195,7 +241,16 @@ Authorization: Bearer <jwt-token>
 **Response (400 Bad Request):**
 ```json
 {
-  "error": "Project name already exists"
+  "errors": [
+    { "path": ["name"], "message": "Project name is required" }
+  ]
+}
+```
+
+**Response (500 Internal Server Error):**
+```json
+{
+  "msg": "Error during project creation"
 }
 ```
 
@@ -216,7 +271,7 @@ Authorization: Bearer <jwt-token>
 ```json
 {
   "msg": "All projects fetched successfully",
-  "projects": [
+  "allProjects": [
     {
       "id": 1,
       "name": "My Project",
@@ -227,6 +282,13 @@ Authorization: Bearer <jwt-token>
     }
     // ...more projects
   ]
+}
+```
+
+**Response (500 Internal Server Error):**
+```json
+{
+  "msg": "Error during fetching projects"
 }
 ```
 
@@ -271,7 +333,16 @@ Authorization: Bearer <jwt-token>
 **Response (400 Bad Request):**
 ```json
 {
-  "error": "User does not belong to this project"
+  "errors": [
+    { "path": ["users"], "message": "Invalid users array" }
+  ]
+}
+```
+
+**Response (500 Internal Server Error):**
+```json
+{
+  "msg": "Error during adding users to project"
 }
 ```
 
@@ -291,6 +362,7 @@ Authorization: Bearer <jwt-token>
 **Response (200 OK):**
 ```json
 {
+  "msg": "Project fetched successfully",
   "project": {
     "id": 1,
     "name": "My Project",
@@ -303,10 +375,146 @@ Authorization: Bearer <jwt-token>
 }
 ```
 
-**Response (404 Not Found):**
+**Response (500 Internal Server Error):**
 ```json
 {
-  "error": "Project not found"
+  "msg": "Error during fetching project by ID"
+}
+```
+
+---
+
+## 5. Delete Project
+
+**Endpoint:** `DELETE /api/v1/project/delete/:projectId`
+
+**Description:** Delete a project by its ID. Requires authentication.
+
+**Headers:**
+```
+Authorization: Bearer <jwt-token>
+```
+
+**Response (200 OK):**
+```json
+{
+  "msg": "Project deleted successfully"
+}
+```
+
+**Response (400 Bad Request):**
+```json
+{
+  "msg": "Project ID is required"
+}
+```
+
+**Response (500 Internal Server Error):**
+```json
+{
+  "msg": "Error during project deletion"
+}
+```
+
+---
+
+## 6. Remove Users from Project
+
+**Endpoint:** `POST /api/v1/project/removeUsers`
+
+**Description:** Remove users from a project. Requires authentication.
+
+**Headers:**
+```
+Authorization: Bearer <jwt-token>
+```
+
+**Request Body:**
+```json
+{
+  "projectId": 1,
+  "users": [2, 3]
+}
+```
+
+**Response (200 OK):**
+```json
+{
+  "msg": "Users removed from project successfully",
+  "project": {
+    "id": 1,
+    "name": "My Project",
+    "users": [
+      { "id": 1, "email": "user@example.com" }
+    ],
+    "createdAt": "2025-06-15T12:34:56.789Z"
+  }
+}
+```
+
+**Response (400 Bad Request):**
+```json
+{
+  "errors": [
+    { "path": ["users"], "message": "Invalid users array" }
+  ]
+}
+```
+
+**Response (500 Internal Server Error):**
+```json
+{
+  "msg": "Error during removing users from project"
+}
+```
+
+---
+
+## 7. Update File Tree
+
+**Endpoint:** `POST /api/v1/project/updateFileTree`
+
+**Description:** Update the file tree of a project. Requires authentication.
+
+**Headers:**
+```
+Authorization: Bearer <jwt-token>
+```
+
+**Request Body:**
+```json
+{
+  "projectId": 1,
+  "fileTree": { /* file tree object */ }
+}
+```
+
+**Response (200 OK):**
+```json
+{
+  "msg": "File tree updated successfully",
+  "project": {
+    "id": 1,
+    "name": "My Project",
+    "fileTree": { /* file tree object */ },
+    "createdAt": "2025-06-15T12:34:56.789Z"
+  }
+}
+```
+
+**Response (400 Bad Request):**
+```json
+{
+  "errors": [
+    { "path": ["fileTree"], "message": "Invalid file tree" }
+  ]
+}
+```
+
+**Response (500 Internal Server Error):**
+```json
+{
+  "msg": "Error updating file tree"
 }
 ```
 

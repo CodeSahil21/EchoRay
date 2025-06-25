@@ -16,6 +16,7 @@ const NewProjectPopup: React.FC<NewProjectPopupProps> = ({ onClose, onCreate }) 
   const token = localStorage.getItem("token");
   const createProjectData = projectName.trim();
   if (!createProjectData) return;
+  onClose();
   try {
     const response = await axios.post(
       `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/project/create`,

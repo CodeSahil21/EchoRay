@@ -71,11 +71,11 @@ const HomePageCompo: React.FC = () => {
         if (res.status === 200) {
           setProjectsState(res.data.allProjects as ProjectStatetype[]);
         } else {
-          console.error("Failed to fetch projects");
+          console.log("Failed to fetch projects");
         }
       })
       .catch((err: unknown) => { // FIX: specify type instead of any
-        console.error("Error fetching projects:", err);
+        console.log("Error fetching projects:", err);
       })
       .finally(() => setLoading(false));
   }, []);

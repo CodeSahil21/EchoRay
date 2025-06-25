@@ -177,13 +177,11 @@ const handleFileModalConfirm = (value: string) => {
     if (!webContainer) {
       getWebContainer().then(container => {
         setWebContainer(container);
-        console.log("container started");
       });
     }
  // eslint-disable-next-line @typescript-eslint/no-explicit-any
     receiveMessage("project-message", (newMessage: any) => {
       setMessages((prev) => [...prev, newMessage]);
-      console.log("Received message:", newMessage);
       webContainer?.mount(newMessage.fileTree);
       // If AI response contains fileTree, update project files (flat or nested)
       try {
@@ -235,7 +233,7 @@ const handleFileModalConfirm = (value: string) => {
         setUsers(usersData);
       } catch (error) { 
         toast.error("An error occurred while fetching project data.");
-        console.error("Error fetching project data:", error);
+        console.log("Error fetching project data:", error);
         router.push("/home");
       } finally {
         setLoading(false);
@@ -708,7 +706,7 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
   }
 }
 
-function ProjectPage() { // FIX: Capitalize component name
+function ProjectPage() { 
   return (
     <ErrorBoundary>
       <UserProtectWrapper>

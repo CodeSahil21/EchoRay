@@ -4,6 +4,7 @@ import { useDispatch } from 'react-redux';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
 import UserProtectWrapper from '@/components/UserProtectWrapper';
+import { toast } from 'react-toastify';
 
 const LogoutPage: React.FC = () => {
     const router = useRouter();
@@ -25,7 +26,8 @@ const LogoutPage: React.FC = () => {
           dispatch({ type: 'user/clearUser' });
           router.push('/signin');
         } catch (e) {
-          console.error('Logout failed:', e);
+          toast.error('Logout failed. Please try again.');
+          console.log('Logout failed:', e);
           router.push('/home'); // Redirect to home or any other page if logout fails
         }
       };
