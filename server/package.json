@@ -30,17 +30,18 @@
     "react-dom": "^19.1.0",
     "socket.io": "^4.8.1",
     "typescript": "^5.8.3",
-    "zod": "^3.24.3"
+    "zod": "^3.25.67"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",
     "@types/cookie": "^0.6.0",
-    "@types/cookie-parser": "^1.4.8",
-    "@types/cors": "^2.8.17",
+    "@types/cookie-parser": "^1.4.9",
+    "@types/cors": "^2.8.19",
     "@types/dotenv": "^6.1.1",
-    "@types/express": "^5.0.1",
-    "@types/jsonwebtoken": "^9.0.9",
-    "@types/morgan": "^1.9.9",
+    "@types/express": "^5.0.3",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/morgan": "^1.9.10",
+    "@types/node": "^24.0.4",
     "morgan": "^1.10.0",
     "prisma": "^6.9.0"
   }
