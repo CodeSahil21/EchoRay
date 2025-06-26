@@ -14,7 +14,7 @@ import helmet from 'helmet'
 const app = express();
 app.use(morgan('dev'));
 app.use(cors({
-  origin: "https://echo-ray-psi.vercel.app", 
+  origin: "http://localhost:3000", 
   credentials: true
 }));
 app.use(cookieparser());    
